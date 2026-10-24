@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: dealership_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dealership_user
+      POSTGRES_PASSWORD: dealership_password
+      POSTGRES_DB: dealership_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  postgres_test:
+    image: postgres:16-alpine
+    container_name: dealership_postgres_test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: dealership_test_db
+    ports:
+      - "5433:5432" # Separate port for automated integration tests
+
+volumes:
+  pgdata:
