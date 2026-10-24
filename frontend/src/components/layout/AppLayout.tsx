@@ -5,9 +5,6 @@ import {
     Car,
     Package,
     LogOut,
-    Bell,
-    Mail,
-    Sun,
     ShieldCheck,
     Eye,
     Search,
@@ -21,6 +18,16 @@ interface AppLayoutProps {
     isAdminLayout?: boolean;
     onSearchQuery?: (query: string) => void;
 }
+
+// DriveMatch Brand Emblem Component
+const DriveMatchLogoIcon: React.FC<{ size?: number }> = ({ size = 26 }) => (
+    <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14 36L26 20H42L36 30H50L22 46L26 36H14Z" fill="#FEE500" />
+        <path d="M28 20L48 20L42 27L22 27Z" fill="#FFFFFF" opacity="0.95" />
+        <circle cx="48" cy="42" r="3.5" fill="#FEE500" />
+        <circle cx="20" cy="42" r="3.5" fill="#FEE500" />
+    </svg>
+);
 
 export const AppLayout: React.FC<AppLayoutProps> = ({
     children,
@@ -80,15 +87,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         onClick={() => navigate('/dashboard')}
                         className="flex items-center gap-2 cursor-pointer"
                     >
-                        <div className="w-8 h-8 bg-brand-dark text-white rounded-lg flex items-center justify-center shadow-xs">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                                <polyline points="2 17 12 22 22 17" />
-                                <polyline points="2 12 12 17 22 12" />
-                            </svg>
+                        <div className="w-8 h-8 bg-[#111315] rounded-xl flex items-center justify-center shadow-md">
+                            <DriveMatchLogoIcon size={18} />
                         </div>
                         <h1 className="text-lg font-extrabold tracking-tight text-gray-900">
-                            DriveMatch
+                            Drive<span className="text-[#FEE500]">Match</span>
                         </h1>
                     </div>
                 </div>
@@ -116,15 +119,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                         <div>
                             {/* Drawer Header */}
                             <div className="flex items-center justify-between pb-4 border-b border-gray-100">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-brand-dark text-white rounded-lg flex items-center justify-center">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                                            <polyline points="2 17 12 22 22 17" />
-                                            <polyline points="2 12 12 17 22 12" />
-                                        </svg>
+                                <div className="flex items-center gap-2.5">
+                                    <div className="w-9 h-9 bg-[#111315] rounded-xl flex items-center justify-center shadow-md">
+                                        <DriveMatchLogoIcon size={20} />
                                     </div>
-                                    <span className="font-extrabold text-base text-gray-900">DriveMatch</span>
+                                    <span className="font-extrabold text-base text-gray-900">
+                                        Drive<span className="text-[#FEE500]">Match</span>
+                                    </span>
                                 </div>
                                 <button
                                     onClick={() => setIsMobileMenuOpen(false)}
@@ -201,13 +202,13 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             {/* ========================================================= */}
             <aside className="hidden md:flex fixed top-6 left-6 bottom-6 w-16 bg-white rounded-3xl py-6 flex-col items-center justify-between shadow-sm border border-gray-100 z-40">
                 <div className="flex flex-col items-center gap-6">
-                    {/* Brand Logo */}
-                    <div className="w-10 h-10 bg-brand-dark text-white rounded-xl flex items-center justify-center shadow-md cursor-pointer" onClick={() => navigate('/dashboard')}>
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polygon points="12 2 2 7 12 12 22 7 12 2" />
-                            <polyline points="2 17 12 22 22 17" />
-                            <polyline points="2 12 12 17 22 12" />
-                        </svg>
+                    {/* Brand Logo with Solid Jet-Black Rounded Square */}
+                    <div
+                        className="w-12 h-12 bg-[#111315] rounded-2xl flex items-center justify-center shadow-lg cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                        onClick={() => navigate('/dashboard')}
+                        title="DriveMatch"
+                    >
+                        <DriveMatchLogoIcon size={26} />
                     </div>
 
                     <nav className="flex flex-col gap-3 mt-2">
@@ -265,7 +266,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <header className="hidden md:flex fixed top-0 left-28 right-6 h-20 bg-[#F4F5F7]/90 backdrop-blur-md z-30 items-center justify-between border-b border-gray-200/40 px-2 gap-4">
                 {/* Brand & Badge */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                    <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">DriveMatch</h1>
+                    <h1 className="text-2xl font-extrabold tracking-tight text-gray-900">
+                        Drive<span className="text-[#FEE500]">Match</span>
+                    </h1>
                     {isAdmin && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                             <ShieldCheck size={13} /> Admin
@@ -297,26 +300,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                     </div>
                 )}
 
-                {/* Right Utility Icons */}
+                {/* Right Utility: User Profile */}
                 <div className="flex items-center gap-3 flex-shrink-0">
-                    <div className="flex items-center bg-white p-1 rounded-full border border-gray-100 shadow-xs">
-                        <button className="p-1.5 rounded-full bg-gray-100 text-gray-800" title="Light mode">
-                            <Sun size={15} />
-                        </button>
-                    </div>
-
-                    <button className="w-9 h-9 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 shadow-xs">
-                        <Mail size={16} />
-                    </button>
-                    <button className="w-9 h-9 rounded-full bg-white border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800 shadow-xs relative">
-                        <Bell size={16} />
-                        <span className="w-2 h-2 rounded-full bg-red-500 absolute top-2 right-2 ring-2 ring-white" />
-                    </button>
-
                     <div className="flex items-center gap-2 pl-2">
                         <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 font-bold text-gray-900 flex items-center justify-center shadow-xs text-sm border-2 border-white">
                             {user?.email ? user.email.charAt(0).toUpperCase() : 'U'}
                         </div>
+                        <span className="text-xs font-bold text-gray-700 max-w-[140px] truncate">
+                            {user?.email}
+                        </span>
                     </div>
                 </div>
             </header>
