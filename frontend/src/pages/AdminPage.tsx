@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { vehiclesApi } from '../api/vehicles.api';
 import type { Vehicle } from '../types';
 import { AppLayout } from '../components/layout/AppLayout';
-import { Plus, ArrowLeft, X, RefreshCw, Trash2, Edit2, ShieldAlert } from 'lucide-react';
+import { Plus, ArrowLeft, X, RefreshCw, Trash2, Edit2 } from 'lucide-react';
 
 export const AdminPage: React.FC = () => {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);

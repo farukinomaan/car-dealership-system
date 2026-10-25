@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
     Car,
@@ -36,7 +36,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 }) => {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
-    const location = useLocation();
 
     const [searchVal, setSearchVal] = useState('');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -217,7 +216,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                                 <NavLink
                                     to="/dashboard"
                                     className={({ isActive }) =>
-                                        `w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${location.pathname === '/dashboard'
+                                        `w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${isActive
                                             ? 'bg-brand-yellow text-gray-900 shadow-sm font-semibold'
                                             : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'
                                         }`
@@ -230,7 +229,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
                                 <NavLink
                                     to="/admin"
                                     className={({ isActive }) =>
-                                        `w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${location.pathname === '/admin'
+                                        `w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 ${isActive
                                             ? 'bg-brand-yellow text-gray-900 shadow-sm font-semibold'
                                             : 'text-gray-400 hover:text-gray-700 hover:bg-gray-100'
                                         }`

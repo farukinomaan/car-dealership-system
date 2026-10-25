@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api/auth.api';
-import { Mail, Lock, User, ArrowRight, AlertCircle, ShieldCheck, Award, Zap, Gauge } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, AlertCircle, ShieldCheck, Zap, Gauge } from 'lucide-react';
 
 // DriveMatch Brand Emblem Component
 const DriveMatchLogoIcon: React.FC<{ size?: number }> = ({ size = 28 }) => (
