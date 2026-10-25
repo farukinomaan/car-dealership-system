@@ -138,7 +138,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                         </div>
 
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-3">
-                            <Clock size={13} /> <Clock size={13} /> Priority Reservation Queue
+                            <Clock size={13} /> Priority Reservation Queue
 
                         </div>
 
