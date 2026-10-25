@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: (import.meta.env.VITE_API_URL || '') + '/api',
+    baseURL: import.meta.env.VITE_API_URL || '/api',
     headers: { 'Content-Type': 'application/json' },
 });
 
@@ -14,14 +14,20 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// Redirect to login on 401
+// Redirect to login on 401 ONLY for protected routes, NOT during login/register
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const requestUrl = error.config?.url || '';
+        const isAuthEndpoint = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+
+        // Only redirect if a protected route got 401 and user is not on /login
+        if (error.response?.status === 401 && !isAuthEndpoint) {
             localStorage.removeItem('accessToken');
             localStorage.removeItem('user');
-            window.location.href = '/login';
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
         }
         return Promise.reject(error);
     }
