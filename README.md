@@ -476,6 +476,32 @@ In compliance with assignment transparency guidelines, this project leveraged an
 
 ---
 
+## 📸 UI & Architecture Preview
+
+<div align="center">
+
+### Concurrency & Flash-Sale Reservation Engine
+*Demonstrating Redis distributed hold leases, counting semaphores, and priority queue handling.*
+<img src="resources/images/120sec.png" width="48%" alt="120-Second Atomic Redis Hold Lease" />
+<img src="resources/images/queuemode.png" width="48%" alt="Multi-Unit Semaphore Priority Queue (Tatkal Mode)" />
+
+### DriveMatch Telemetry UI & Global State
+*Custom hypercar aesthetics, compound query filtering, and real-time database stock validation.*
+<img src="resources/images/hud.png" width="48%" alt="Main Inventory Telemetry HUD" />
+<img src="resources/images/filter.png" width="48%" alt="Compound Query Filtering Engine" />
+<img src="resources/images/card.png" width="48%" alt="Vehicle Specification & Inspection Modal" />
+<img src="resources/images/livestock.png" width="48%" alt="Real-time Live Stock Exhaustion Counters" />
+
+### Role-Segregated Administration & Data Integrity
+*JWT-based portal segregation, curated automotive dictionaries, and Auto-Merge restock tools.*
+<img src="resources/images/authentication.png" width="48%" alt="Role-Segregated JWT Authentication Portal" />
+<img src="resources/images/admininventory.png" width="48%" alt="Admin Centralized Inventory Manager" />
+<img src="resources/images/automerge.png" width="48%" alt="Data Normalization & Auto-Merge Edit Modal" />
+
+</div>
+
+---
+
 <div align="center">
 
 **Engineered with strict TDD, distributed concurrency guarantees, and high-performance aesthetics.**
