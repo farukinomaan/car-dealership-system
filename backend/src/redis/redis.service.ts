@@ -8,13 +8,15 @@ export class RedisService implements OnModuleDestroy {
     private readonly logger = new Logger(RedisService.name);
 
     constructor() {
-        this.client = new Redis({
-            host: process.env.REDIS_HOST || 'localhost',
-            port: Number(process.env.REDIS_PORT) || 6379,
-            maxRetriesPerRequest: 1,
-            lazyConnect: true,
-        });
-
+        const redisUrl = process.env.REDIS_URL;
+        this.client = redisUrl
+            ? new Redis(redisUrl, { maxRetriesPerRequest: 1, lazyConnect: true })
+            : new Redis({
+                host: process.env.REDIS_HOST || 'localhost',
+                port: Number(process.env.REDIS_PORT) || 6379,
+                maxRetriesPerRequest: 1,
+                lazyConnect: true,
+            });
         this.client.connect().catch((err) => {
             this.logger.warn(`Redis not available (${err.message}). Falling back to DB-only.`);
         });
