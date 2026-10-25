@@ -1,3 +1,4 @@
+// backend/src/inventory/inventory.service.ts
 import {
     Injectable,
     NotFoundException,
@@ -17,27 +18,46 @@ export class InventoryService {
     ) { }
 
     /**
-     * TIER 1: BookMyShow 2-Minute Lock Reservation
-     * Locks the car exclusively for this user in Redis for 120 seconds.
+     * TIER 1: Multi-Unit Reservation (BookMyShow Semaphore)
+     * Up to `vehicle.quantity` buyers can hold simultaneous 2-minute windows!
      */
     async reserve(vehicleId: string, userId: string) {
-        const lockKey = `vehicle:hold:${vehicleId}`;
-        const currentHolder = await this.redis.getHolder(lockKey);
+        // 1. Fetch available stock
+        const vehicle = await this.prisma.vehicle.findUnique({
+            where: { id: vehicleId },
+            select: { quantity: true, make: true, model: true },
+        });
 
-        // If locked by another customer, send 409 for the IRCTC queue screen
-        if (currentHolder && currentHolder !== userId) {
+        if (!vehicle) {
+            throw new NotFoundException(`Vehicle with ID ${vehicleId} not found`);
+        }
+
+        if (vehicle.quantity <= 0) {
+            throw new BadRequestException('This vehicle is completely sold out.');
+        }
+
+        // 2. If this user already holds a slot, let them continue their session
+        const alreadyHeld = await this.redis.hasUserHold(vehicleId, userId);
+        if (alreadyHeld) {
+            return {
+                status: 'RESERVED',
+                expiresInSeconds: 120,
+                expiresAt: Date.now() + 120 * 1000,
+            };
+        }
+
+        // 3. Count how many other buyers are currently holding a unit
+        const activeHoldsCount = await this.redis.getActiveHoldsCount(vehicleId);
+
+        // 4. If all in-stock units are held, place user in Tatkal Queue
+        if (activeHoldsCount >= vehicle.quantity) {
             throw new ConflictException(
-                'This vehicle is currently locked in an active 2-minute booking window by another buyer.',
+                `All ${vehicle.quantity} in-stock unit(s) are currently in active checkout sessions.`,
             );
         }
 
-        // Acquire 2-minute hold (120 seconds TTL in Redis)
-        const acquired = await this.redis.acquireHold(lockKey, userId, 120);
-        if (!acquired && currentHolder !== userId) {
-            throw new ConflictException(
-                'This vehicle is currently locked in an active 2-minute booking window by another buyer.',
-            );
-        }
+        // 5. Acquire 2-minute exclusive slot for this buyer
+        await this.redis.acquireHold(vehicleId, userId, 120);
 
         return {
             status: 'RESERVED',
@@ -50,8 +70,7 @@ export class InventoryService {
      * Release hold if user cancels or closes modal before 2 minutes
      */
     async release(vehicleId: string, userId: string) {
-        const lockKey = `vehicle:hold:${vehicleId}`;
-        await this.redis.releaseHold(lockKey, userId);
+        await this.redis.releaseHold(vehicleId, userId);
         return { status: 'RELEASED' };
     }
 
@@ -60,15 +79,6 @@ export class InventoryService {
      */
     async purchase(vehicleId: string, userId: string, dto: PurchaseDto) {
         const qty = dto.quantity || 1;
-        const lockKey = `vehicle:hold:${vehicleId}`;
-
-        // Verify the user holds the active reservation lock
-        const currentHolder = await this.redis.getHolder(lockKey);
-        if (currentHolder && currentHolder !== userId) {
-            throw new ConflictException(
-                'This vehicle is currently held in checkout by another customer. Please try again shortly.',
-            );
-        }
 
         try {
             // TIER 2: Atomic Database Commit inside PostgreSQL ACID Transaction
@@ -121,8 +131,8 @@ export class InventoryService {
                 };
             });
         } finally {
-            // Clean up the Redis hold once purchase settles
-            await this.redis.releaseHold(lockKey, userId);
+            // Clean up this buyer's Redis hold once purchase completes
+            await this.redis.releaseHold(vehicleId, userId);
         }
     }
 
@@ -132,9 +142,7 @@ export class InventoryService {
     async restock(vehicleId: string, userId: string, dto: RestockDto) {
         const qty = dto.quantity;
 
-        // Execute atomically inside an ACID transaction
         return this.prisma.$transaction(async (tx) => {
-            // 1. Verify vehicle exists
             const vehicle = await tx.vehicle.findUnique({
                 where: { id: vehicleId },
             });
@@ -143,13 +151,11 @@ export class InventoryService {
                 throw new NotFoundException(`Vehicle with ID ${vehicleId} not found`);
             }
 
-            // 2. Increment stock
             const updatedVehicle = await tx.vehicle.update({
                 where: { id: vehicleId },
                 data: { quantity: { increment: qty } },
             });
 
-            // 3. Create immutable transaction audit log
             const transaction = await tx.transaction.create({
                 data: {
                     type: 'RESTOCK',

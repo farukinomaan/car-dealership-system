@@ -17,48 +17,55 @@ export class RedisService implements OnModuleDestroy {
                 maxRetriesPerRequest: 1,
                 lazyConnect: true,
             });
+
         this.client.connect().catch((err) => {
             this.logger.warn(`Redis not available (${err.message}). Falling back to DB-only.`);
         });
     }
 
     /**
-     * Acquire a temporary hold/lock (BookMyShow style)
-     * @param key Lock identifier (e.g., `lock:vehicle:${id}`)
-     * @param userId The buyer holding the item
-     * @param ttlSeconds Reservation window (e.g., 120s = 2 minutes)
+     * Count how many distinct buyers currently hold a reservation for this vehicle
      */
-    async acquireHold(key: string, userId: string, ttlSeconds: number = 120): Promise<boolean> {
+    async getActiveHoldsCount(vehicleId: string): Promise<number> {
         try {
-            // SET key value NX EX ttl (Only set if doesn't exist, expire in ttl seconds)
-            const result = await this.client.set(key, userId, 'EX', ttlSeconds, 'NX');
+            const keys = await this.client.keys(`vehicle:hold:${vehicleId}:*`);
+            return keys.length;
+        } catch {
+            return 0;
+        }
+    }
+
+    /**
+     * Check if a specific user already holds an active slot
+     */
+    async hasUserHold(vehicleId: string, userId: string): Promise<boolean> {
+        try {
+            const val = await this.client.get(`vehicle:hold:${vehicleId}:${userId}`);
+            return Boolean(val);
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Acquire an individual 2-minute reservation lease for a buyer
+     */
+    async acquireHold(vehicleId: string, userId: string, ttlSeconds: number = 120): Promise<boolean> {
+        try {
+            const key = `vehicle:hold:${vehicleId}:${userId}`;
+            const result = await this.client.set(key, 'HELD', 'EX', ttlSeconds, 'NX');
             return result === 'OK';
         } catch {
-            return true; // Graceful fallback if Redis is offline
+            return true;
         }
     }
 
     /**
-     * Check who currently holds the item
+     * Release this specific buyer's hold
      */
-    async getHolder(key: string): Promise<string | null> {
+    async releaseHold(vehicleId: string, userId: string): Promise<void> {
         try {
-            return await this.client.get(key);
-        } catch {
-            return null;
-        }
-    }
-
-    /**
-     * Release hold after purchase completes or user cancels
-     */
-    async releaseHold(key: string, userId: string): Promise<void> {
-        try {
-            // Only release if the current holder is the same user
-            const currentHolder = await this.client.get(key);
-            if (currentHolder === userId) {
-                await this.client.del(key);
-            }
+            await this.client.del(`vehicle:hold:${vehicleId}:${userId}`);
         } catch (err) {
             this.logger.error(`Failed to release hold: ${err}`);
         }
