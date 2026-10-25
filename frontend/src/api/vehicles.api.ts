@@ -17,6 +17,12 @@ export const vehiclesApi = {
     delete: (id: string): Promise<void> =>
         api.delete(`/vehicles/${id}`).then((r) => r.data),
 
+    reserve: (id: string) =>
+        api.post(`/vehicles/${id}/reserve`).then((r) => r.data),
+
+    release: (id: string) =>
+        api.post(`/vehicles/${id}/release`).then((r) => r.data),
+
     purchase: (id: string, quantity: number = 1) =>
         api.post(`/vehicles/${id}/purchase`, { quantity }).then((r) => r.data),
 

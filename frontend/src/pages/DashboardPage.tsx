@@ -5,6 +5,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { HeroBanner } from '../components/dashboard/HeroBanner';
 import { FilterSidebar, type FilterState } from '../components/dashboard/FilterSidebar';
 import { VehicleCard, getVehicleColors } from '../components/vehicles/VehicleCard';
+import { ReservationModal } from '../components/vehicles/ReservationModal';
 import { useAuth } from '../context/AuthContext';
 import { SlidersHorizontal, X } from 'lucide-react';
 
@@ -18,6 +19,11 @@ export const DashboardPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [notification, setNotification] = useState<string | null>(null);
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+    // BookMyShow / IRCTC Reservation Modal State
+    const [selectedVehicleForReserve, setSelectedVehicleForReserve] = useState<Vehicle | null>(null);
+    const [isReserveModalOpen, setIsReserveModalOpen] = useState(false);
+    const [isQueueActive, setIsQueueActive] = useState(false);
 
     const { user } = useAuth();
     const isAdmin = user?.role === 'ADMIN';
@@ -58,16 +64,74 @@ export const DashboardPage: React.FC = () => {
         });
     };
 
+    /**
+     * User clicks "Proceed to Reserve":
+     * 1. Calls Redis reservation lock
+     * 2. If available -> Opens 2:00 countdown window
+     * 3. If locked by another customer -> Opens IRCTC Tatkal Waiting Queue Screen
+     */
     const handlePurchase = async (id: string) => {
+        const car = vehicles.find((v) => v.id === id);
+        if (!car) return;
+
+        setSelectedVehicleForReserve(car);
+
         try {
-            await vehiclesApi.purchase(id);
-            setNotification('Vehicle purchased successfully! 🎉');
+            await vehiclesApi.reserve(id);
+            setIsQueueActive(false);
+            setIsReserveModalOpen(true);
+        } catch (err: any) {
+            // 409 Conflict: another customer currently has the 2-minute lock
+            if (err.response?.status === 409) {
+                setIsQueueActive(true);
+                setIsReserveModalOpen(true);
+            } else {
+                setNotification(err.response?.data?.message || 'Failed to start reservation session');
+                setTimeout(() => setNotification(null), 4000);
+            }
+        }
+    };
+
+    /**
+     * User submits phone & location inside the 2-minute booking window
+     */
+    const handleConfirmPurchase = async (_details: { phone: string; location: string }) => {
+        if (!selectedVehicleForReserve) return;
+        try {
+            await vehiclesApi.purchase(selectedVehicleForReserve.id);
+            setNotification('Vehicle purchased successfully! Order confirmed 🎉');
             setTimeout(() => setNotification(null), 4000);
             fetchVehicles();
         } catch (err: any) {
-            setNotification(err.response?.data?.message || 'Failed to complete purchase');
-            setTimeout(() => setNotification(null), 4000);
+            throw err;
         }
+    };
+
+    /**
+     * Retry from inside the IRCTC Queue screen
+     */
+    const handleRetryQueue = async () => {
+        if (!selectedVehicleForReserve) return;
+        try {
+            await vehiclesApi.reserve(selectedVehicleForReserve.id);
+            // Won the slot! Switch from Queue screen to the 2-minute timing window
+            setIsQueueActive(false);
+        } catch (err: any) {
+            // Still in queue
+        }
+    };
+
+    /**
+     * User closes modal or cancels: releases lock in Redis for others
+     */
+    const handleCloseModal = async () => {
+        if (selectedVehicleForReserve && !isQueueActive) {
+            try {
+                await vehiclesApi.release(selectedVehicleForReserve.id);
+            } catch { }
+        }
+        setIsReserveModalOpen(false);
+        setSelectedVehicleForReserve(null);
     };
 
     const displayedVehicles = useMemo(() => {
@@ -118,9 +182,7 @@ export const DashboardPage: React.FC = () => {
             {/* Top Hero Booking Card */}
             <HeroBanner />
 
-            {/* ========================================================= */}
-            {/* FLIPKART-STYLE MOBILE STICKY FILTER BAR (Mobile Only)     */}
-            {/* ========================================================= */}
+            {/* FLIPKART-STYLE MOBILE STICKY FILTER BAR (Mobile Only) */}
             <div className="lg:hidden sticky top-14 z-30 bg-white/95 backdrop-blur-md -mx-4 px-4 py-2.5 border-y border-gray-200/70 flex items-center justify-between mb-4 shadow-xs">
                 <span className="text-xs font-semibold text-gray-600">
                     {displayedVehicles.length} vehicles found
@@ -128,7 +190,7 @@ export const DashboardPage: React.FC = () => {
 
                 <button
                     onClick={() => setIsMobileFilterOpen(true)}
-                    className="flex items-center gap-2 bg-brand-yellow text-gray-900 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs hover:brightness-95 active:scale-95 transition-all"
+                    className="flex items-center gap-2 bg-[#FEE500] text-gray-900 font-bold text-xs px-3.5 py-1.5 rounded-xl shadow-xs hover:brightness-95 active:scale-95 transition-all"
                 >
                     <SlidersHorizontal size={14} />
                     <span>Filter & Sort</span>
@@ -140,7 +202,7 @@ export const DashboardPage: React.FC = () => {
 
             {/* Main Body: Left Filter Sidebar + Right Vehicle Grid */}
             <div className="flex flex-col lg:flex-row gap-6 items-start">
-                {/* Desktop Sidebar: Exactly unchanged */}
+                {/* Desktop Sidebar */}
                 <div className="hidden lg:block w-72 shrink-0 sticky top-24">
                     <FilterSidebar onSearch={handleSearch} />
                 </div>
@@ -177,9 +239,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* ========================================================= */}
-            {/* FLIPKART-STYLE BOTTOM SHEET FILTER MODAL (Mobile Only)    */}
-            {/* ========================================================= */}
+            {/* FLIPKART-STYLE BOTTOM SHEET FILTER MODAL (Mobile Only) */}
             {isMobileFilterOpen && (
                 <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-end">
                     <div
@@ -214,13 +274,25 @@ export const DashboardPage: React.FC = () => {
                         <div className="p-4 border-t border-gray-100 bg-white">
                             <button
                                 onClick={() => setIsMobileFilterOpen(false)}
-                                className="w-full py-3 bg-brand-yellow text-gray-900 font-bold text-xs rounded-2xl shadow-xs"
+                                className="w-full py-3 bg-[#FEE500] text-gray-900 font-bold text-xs rounded-2xl shadow-xs"
                             >
                                 View {displayedVehicles.length} Vehicles
                             </button>
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* BOOKMYSHOW 2-MINUTE TIMING WINDOW & IRCTC QUEUE MODAL */}
+            {selectedVehicleForReserve && (
+                <ReservationModal
+                    vehicle={selectedVehicleForReserve}
+                    isOpen={isReserveModalOpen}
+                    isInQueue={isQueueActive}
+                    onClose={handleCloseModal}
+                    onConfirmPurchase={handleConfirmPurchase}
+                    onRetryQueue={handleRetryQueue}
+                />
             )}
         </AppLayout>
     );

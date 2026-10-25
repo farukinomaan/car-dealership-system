@@ -153,7 +153,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPurchase, i
                         </div>
                     </div>
 
-                    {/* Purchase Button — disabled if Admin preview mode */}
+                    {/* Proceed to Reserve Button */}
                     {isAdmin ? (
                         <div className="w-full mt-4 py-2.5 px-4 rounded-2xl text-xs font-semibold text-center bg-gray-100 text-gray-500">
                             Admin Preview Only
@@ -163,12 +163,12 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPurchase, i
                             onClick={handleBuy}
                             disabled={!isAvailable || purchasing}
                             className={`w-full mt-4 py-2.5 px-4 rounded-2xl text-xs font-bold flex items-center justify-center gap-2 transition-all ${isAvailable
-                                    ? 'bg-brand-yellow hover:bg-[#F5DC00] text-gray-900 shadow-xs hover:shadow'
+                                    ? 'bg-[#FEE500] hover:bg-[#F5DC00] text-[#111315] shadow-xs hover:shadow active:scale-[0.99]'
                                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                                 }`}
                         >
                             <ShoppingCart size={14} />
-                            {purchasing ? 'Processing...' : isAvailable ? 'Purchase Vehicle' : 'Out of Stock'}
+                            {purchasing ? 'Reserving...' : isAvailable ? 'Proceed to Reserve' : 'Sold Out'}
                         </button>
                     )}
                 </div>
@@ -186,7 +186,7 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPurchase, i
                         </button>
 
                         <div className="flex items-center gap-2 mb-1.5">
-                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-yellow text-gray-900 shadow-2xs">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#FEE500] text-gray-900 shadow-2xs">
                                 {vehicle.category}
                             </span>
                             <span className="text-xs text-gray-400 font-medium">{vehicle.year} Model</span>
@@ -251,10 +251,10 @@ export const VehicleCard: React.FC<VehicleCardProps> = ({ vehicle, onPurchase, i
                                         setShowZoomModal(false);
                                         handleBuy();
                                     }}
-                                    className="bg-brand-yellow hover:bg-[#F5DC00] text-gray-900 font-bold px-6 py-3 rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all"
+                                    className="bg-[#FEE500] hover:bg-[#F5DC00] text-[#111315] font-bold px-6 py-3 rounded-2xl text-xs flex items-center gap-2 shadow-xs transition-all"
                                 >
                                     <ShoppingCart size={15} />
-                                    Purchase Now
+                                    Proceed to Reserve
                                 </button>
                             )}
                         </div>

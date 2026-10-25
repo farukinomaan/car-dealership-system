@@ -13,6 +13,22 @@ import { Role } from '@prisma/client';
 export class InventoryController {
     constructor(private readonly inventoryService: InventoryService) { }
 
+    @Post(':id/reserve')
+    async reserve(
+        @Param('id') id: string,
+        @CurrentUser('id') userId: string,
+    ) {
+        return this.inventoryService.reserve(id, userId);
+    }
+
+    @Post(':id/release')
+    async release(
+        @Param('id') id: string,
+        @CurrentUser('id') userId: string,
+    ) {
+        return this.inventoryService.release(id, userId);
+    }
+
     @Post(':id/purchase')
     async purchase(
         @Param('id') id: string,
