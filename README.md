@@ -508,4 +508,13 @@ In compliance with assignment transparency guidelines, this project leveraged an
 
 🏁 [Live Demo](https://car-dealership-system-eta.vercel.app)
 
+### 🔑 Demo Credentials (Live & Local)
+You can use the pre-configured accounts below or register a new one directly on the portal:
+| Role | Portal Tab | Email | Password | Permissions |
+| :--- | :--- | :--- | :--- | :--- |
+| **Admin** | `Admin Portal` | `admin@dealership.com` | `admin123` | Full inventory management, restock, and auto-merge tools |
+| **Customer** | `Customer Portal` | `customer@dealership.com` | `customer123` | Browse catalog, reserve 120s hold, checkout & purchase |
+> **Note**: The login portal features strict role-based separation. Please ensure you select the matching **Customer** or **Admin** tab when logging in.
+
+
 </div>
