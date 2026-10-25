@@ -18,7 +18,7 @@ export class InventoryService {
     ) { }
 
     /**
-     * TIER 1: Multi-Unit Reservation (BookMyShow Semaphore)
+     * TIER 1: Multi-Unit Reservation
      * Up to `vehicle.quantity` buyers can hold simultaneous 2-minute windows!
      */
     async reserve(vehicleId: string, userId: string) {
@@ -49,7 +49,7 @@ export class InventoryService {
         // 3. Count how many other buyers are currently holding a unit
         const activeHoldsCount = await this.redis.getActiveHoldsCount(vehicleId);
 
-        // 4. If all in-stock units are held, place user in Tatkal Queue
+        // 4. If all in-stock units are held, place user in Queue
         if (activeHoldsCount >= vehicle.quantity) {
             throw new ConflictException(
                 `All ${vehicle.quantity} in-stock unit(s) are currently in active checkout sessions.`,

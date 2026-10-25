@@ -126,7 +126,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 </button>
 
                 {/* ========================================================
-                    CASE 1: IRCTC HIGH-CONCURRENCY QUEUE WAITING SCREEN
+                    CASE 1: HIGH-CONCURRENCY QUEUE WAITING SCREEN
                    ======================================================== */}
                 {isInQueue ? (
                     <div className="text-center py-4">
@@ -138,7 +138,8 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                         </div>
 
                         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-3">
-                            <Clock size={13} /> Active Tatkal Lock Queue
+                            <Clock size={13} /> <Clock size={13} /> Priority Reservation Queue
+
                         </div>
 
                         <h3 className="text-xl font-black tracking-tight text-white mb-2">
@@ -184,7 +185,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                     </div>
                 ) : (
                     /* ========================================================
-                        CASE 2: BOOKMYSHOW 2-MINUTE ACTIVE TIMING WINDOW
+                        CASE 2: 2-MINUTE ACTIVE TIMING WINDOW
                        ======================================================== */
                     <div>
                         {/* Countdown Header Bar */}
