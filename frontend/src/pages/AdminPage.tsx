@@ -104,7 +104,7 @@ export const AdminPage: React.FC = () => {
 
     const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
         setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
+        setTimeout(() => setToast(null), 3500);
     };
 
     const fetchVehicles = async () => {
@@ -122,6 +122,20 @@ export const AdminPage: React.FC = () => {
     useEffect(() => {
         fetchVehicles();
     }, []);
+
+    // Compute active target Make & Model
+    const currentMake = selectedBrand === 'OTHER' ? customBrand.trim() : selectedBrand;
+    const currentModel = selectedModel === 'OTHER' ? customModel.trim() : selectedModel;
+
+    // Check if a vehicle with the same make, model, and year already exists
+    const existingDuplicate = !editingVehicle && currentMake && currentModel
+        ? vehicles.find(
+            (v) =>
+                v.make.trim().toLowerCase() === currentMake.toLowerCase() &&
+                v.model.trim().toLowerCase() === currentModel.toLowerCase() &&
+                Number(v.year) === Number(form.year)
+        )
+        : null;
 
     // Handle Brand Dropdown Change
     const handleBrandChange = (brand: string) => {
@@ -206,22 +220,19 @@ export const AdminPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const finalMake = selectedBrand === 'OTHER' ? customBrand.trim() : selectedBrand;
-        const finalModel = selectedModel === 'OTHER' ? customModel.trim() : selectedModel;
-
-        if (!finalMake) {
+        if (!currentMake) {
             showToast('Please specify a car brand', 'error');
             return;
         }
-        if (!finalModel) {
+        if (!currentModel) {
             showToast('Please specify a car model', 'error');
             return;
         }
 
         const payload = {
             ...form,
-            make: finalMake,
-            model: finalModel,
+            make: currentMake,
+            model: currentModel,
             price: Number(form.price),
             quantity: Number(form.quantity),
             year: Number(form.year)
@@ -231,6 +242,14 @@ export const AdminPage: React.FC = () => {
             if (editingVehicle) {
                 await vehiclesApi.update(editingVehicle.id, payload);
                 showToast('Vehicle updated successfully!');
+            } else if (existingDuplicate) {
+                // Auto-merge quantity into existing vehicle instead of creating duplicate card!
+                const qtyToAdd = Math.max(1, Number(form.quantity));
+                await vehiclesApi.restock(existingDuplicate.id, qtyToAdd);
+                showToast(
+                    `Merged! Added ${qtyToAdd} unit(s) to existing ${currentMake} ${currentModel}. Total: ${existingDuplicate.quantity + qtyToAdd} in stock.`,
+                    'success'
+                );
             } else {
                 await vehiclesApi.create(payload);
                 showToast('Vehicle added to inventory!');
@@ -611,14 +630,14 @@ export const AdminPage: React.FC = () => {
                                     />
                                 </div>
 
-                                {/* 6. QUANTITY IN STOCK */}
+                                {/* 6. QUANTITY */}
                                 <div>
                                     <label className="block text-xs font-semibold text-gray-700 mb-1.5">
-                                        Showroom Quantity *
+                                        {existingDuplicate ? 'Quantity to Add *' : 'Showroom Quantity *'}
                                     </label>
                                     <input
                                         type="number"
-                                        min={0}
+                                        min={1}
                                         required
                                         value={form.quantity}
                                         onChange={(e) => setForm({ ...form, quantity: Number(e.target.value) })}
@@ -651,6 +670,20 @@ export const AdminPage: React.FC = () => {
                                 />
                             </div>
 
+                            {/* LIVE DUPLICATE DETECTION NOTICE */}
+                            {existingDuplicate && (
+                                <div className="bg-amber-50 border border-amber-200 text-amber-900 px-4 py-3 rounded-2xl text-xs font-medium flex items-center gap-2.5 animate-fade-in">
+                                    <AlertCircle size={17} className="text-amber-600 flex-shrink-0" />
+                                    <div>
+                                        <span className="font-bold">Already exists in inventory!</span>
+                                        <span className="text-amber-800 ml-1">
+                                            A {existingDuplicate.year} {existingDuplicate.make} {existingDuplicate.model} is already active with{' '}
+                                            <b>{existingDuplicate.quantity} unit(s)</b>. Submitting will merge <b>+{form.quantity} units</b> into the existing card.
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* ACTION BUTTONS */}
                             <div className="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
                                 <button
@@ -664,7 +697,11 @@ export const AdminPage: React.FC = () => {
                                     type="submit"
                                     className="bg-brand-yellow hover:bg-[#F5DC00] text-gray-900 font-bold px-6 py-2.5 rounded-2xl text-xs shadow-xs transition-all active:scale-95"
                                 >
-                                    {editingVehicle ? 'Update Vehicle' : 'Add to Inventory'}
+                                    {editingVehicle
+                                        ? 'Update Vehicle'
+                                        : existingDuplicate
+                                            ? `Merge & Add Stock (+${form.quantity})`
+                                            : 'Add to Inventory'}
                                 </button>
                             </div>
                         </form>
